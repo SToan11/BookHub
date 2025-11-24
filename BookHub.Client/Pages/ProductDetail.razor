@@ -1,0 +1,54 @@
+﻿@page "/products/{id:guid}"
+@inject BookHub.Client.Services.ProductsService ProductsService
+@using BookHub.Client.Models
+@layout UserLayout
+
+<div class="container mt-5">
+    <h3 class="h3 mb-4 text-dark">Chi tiết sản phẩm</h3>
+
+    @if (product == null)
+    {
+        <div class="d-flex justify-content-center align-items-center" style="height: 200px">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="row g-4 bg-white p-4 rounded shadow">
+            <div class="col-md-6">
+                <img src="@product.Image" alt="@product.Name" class="img-fluid rounded" />
+            </div>
+
+            <div class="col-md-6">
+                <h2 class="h3 mb-3">@product.Name</h2>
+                <p class="text-muted mb-1">Tác giả: <strong>@product.Author</strong></p>
+                <p class="text-muted mb-1">Giá: <strong>@product.Price.ToString("N0") VNĐ</strong></p>
+                <p class="text-muted mb-1">Kho: <strong>@product.QuantityInStock</strong></p>
+                <p class="text-muted mb-3">
+                    Thể loại:
+                    @foreach (var category in product.Categories)
+                    {
+                        <span class="badge bg-primary me-1">@category</span>
+                    }
+                </p>
+
+                <h4 class="h5 mt-4">Mô tả:</h4>
+                <p class="text-muted">@product.Description</p>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public Guid id { get; set; }
+
+    private ProductDto? product;
+
+    protected override async Task OnInitializedAsync()
+    {
+        product = await ProductsService.GetProductByIdAsync(id);
+    }
+}

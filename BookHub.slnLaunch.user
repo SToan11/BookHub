@@ -1,0 +1,15 @@
+[
+  {
+    "Name": "New Profile",
+    "Projects": [
+      {
+        "Path": "BookHub.API\\BookHub.API.csproj",
+        "Action": "Start"
+      },
+      {
+        "Path": "BookHub.Client\\BookHub.Client.csproj",
+        "Action": "Start"
+      }
+    ]
+  }
+]

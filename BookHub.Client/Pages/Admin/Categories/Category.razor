@@ -1,0 +1,167 @@
+﻿@page "/admin/categories"
+@inject BookHub.Client.Services.ICategoryService CategoryService
+@using BookHub.Client.Models
+@layout AdminLayout
+
+<h3 class="mb-3">📚 Danh sách thể loại sách</h3>
+
+<div class="mb-3">
+    <input class="form-control" @bind="searchKeyword" placeholder="🔍 Nhập từ khóa tìm kiếm..." />
+</div>
+<div class="mb-3">
+    <button class="btn btn-primary me-2" @onclick="Search">Tìm kiếm</button>
+    <button class="btn btn-secondary" @onclick="LoadData">Tải lại</button>
+</div>
+
+@if (categories == null)
+{
+    <p><em>Đang tải dữ liệu...</em></p>
+}
+else if (!categories.Any())
+{
+    <p><em>Không có thể loại nào.</em></p>
+}
+else
+{
+    <ul class="list-group">
+        @foreach (var category in categories)
+        {
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+                @category.Name
+                <span>
+                    <button class="btn btn-sm btn-warning me-2" @onclick="() => StartEditing(category.Id)">Sửa</button>
+                    <button class="btn btn-sm btn-danger" @onclick="() => Delete(category.Id)">Xóa</button>
+                </span>
+            </li>
+        }
+    </ul>
+}
+
+<button class="btn btn-success mt-3" @onclick="StartAdding">➕ Thêm thể loại</button>
+
+@if (!string.IsNullOrEmpty(errorMessage))
+{
+    <div class="alert alert-danger">@errorMessage</div>
+}
+
+@if (isAdding || isEditing)
+{
+    <CategoryForm Model="categoryForm"
+                  ButtonText="@((isEditing ? "Cập nhật" : "Thêm"))"
+                  OnSubmit="OnSubmitForm"
+                  OnCancelClick="CancelForm" />
+}
+
+
+
+@code {
+    private List<CategoryDto>? categories;
+    private string searchKeyword = "";
+
+    private bool isAdding = false;
+    private bool isEditing = false;
+    private CategoryCreateDto categoryForm = new();
+    private Guid editingId = Guid.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        categories = await CategoryService.GetAllAsync();
+    }
+
+    private async Task Search()
+    {
+        if (string.IsNullOrWhiteSpace(searchKeyword))
+        {
+            await LoadData();
+        }
+        else
+        {
+            categories = await CategoryService.SearchAsync(searchKeyword);
+        }
+    }
+
+    private async Task Delete(Guid id)
+    {
+        var confirmed = await JS.InvokeAsync<bool>("confirm", "Bạn có chắc muốn xóa thể loại này?");
+        if (confirmed && await CategoryService.DeleteAsync(id))
+        {
+            await LoadData();
+        }
+    }
+
+    private void StartAdding()
+    {
+        categoryForm = new();
+        isAdding = true;
+        isEditing = false;
+    }
+
+    private async Task StartEditing(Guid id)
+    {
+        var category = await CategoryService.GetByIdAsync(id);
+        if (category != null)
+        {
+            categoryForm = new CategoryCreateDto { Name = category.Name };
+            editingId = id;
+            isEditing = true;
+            isAdding = false;
+        }
+    }
+
+    private string? errorMessage = null;
+
+    private async Task OnSubmitForm()
+    {
+        errorMessage = null;
+
+        if (string.IsNullOrWhiteSpace(categoryForm.Name))
+        {
+            errorMessage = "Tên thể loại không được để trống.";
+            return;
+        }
+
+        if (isAdding)
+        {
+            var result = await CategoryService.CreateAsync(categoryForm);
+            if (result != null)
+            {
+                await LoadData();
+                isAdding = false;
+                categoryForm = new(); // clear form
+            }
+            else
+            {
+                errorMessage = "❌ Tên thể loại đã tồn tại. Vui lòng nhập tên khác.";
+            }
+        }
+        else if (isEditing)
+        {
+            var success = await CategoryService.UpdateAsync(editingId, new CategoryUpdateDto { Name = categoryForm.Name });
+            if (success)
+            {
+                await LoadData();
+                isEditing = false;
+                categoryForm = new();
+            }
+            else
+            {
+                errorMessage = "❌ Không thể cập nhật. Có thể tên đã bị trùng.";
+            }
+        }
+    }
+
+    private void CancelForm()
+    {
+        isAdding = false;
+        isEditing = false;
+        categoryForm = new();
+    }
+
+    [Inject]
+    private IJSRuntime JS { get; set; } = default!;
+}

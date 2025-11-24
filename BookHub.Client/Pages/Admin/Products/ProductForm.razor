@@ -1,0 +1,107 @@
+﻿@using BookHub.Client.Models
+@code {
+    [Parameter]
+    public ProductCreateDto Model { get; set; }
+
+    [Parameter]
+    public EventCallback OnSubmit { get; set; }
+
+    [Parameter]
+    public EventCallback OnCancelClick { get; set; }
+
+    [Parameter]
+    public List<string> AllCategories { get; set; } = [];
+
+    [Parameter]
+    public string ButtonText { get; set; } = "Lưu";
+}
+
+<EditForm Model="Model" OnValidSubmit="OnSubmit">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="mb-3">
+        <label>Tên sản phẩm</label>
+        <InputText class="form-control" @bind-Value="Model.Name" />
+    </div>
+    <div class="mb-3">
+        <label>Tác giả</label>
+        <InputText class="form-control" @bind-Value="Model.Author" />
+    </div>
+    <div class="mb-3">
+        <label>Mô tả</label>
+        <InputText class="form-control" @bind-Value="Model.Description" />
+    </div>
+
+    <div class="mb-3">
+        <label>Giá</label>
+        <InputNumber class="form-control" @bind-Value="Model.Price" />
+    </div>
+
+    <div class="mb-3">
+        <label>Số lượng</label>
+        <InputNumber class="form-control" @bind-Value="Model.QuantityInStock" />
+    </div>
+
+    <div class="mb-3">
+        <label>Ảnh</label>
+        <InputText class="form-control" @bind-Value="Model.Image" />
+    </div>
+
+    <div class="mb-3">
+        <label>Thể loại</label>
+        @foreach (var category in AllCategories)
+        {
+            <div class="form-check">
+                <input type="checkbox"
+                       class="form-check-input"
+                       id="@category"
+                       value="@category"
+                       checked="@Model.CategoryNames.Contains(category)"
+                       @onchange="e => OnCategoryChanged((bool)((ChangeEventArgs)e).Value, category)" />
+                <label class="form-check-label" for="@category">@category</label>
+            </div>
+        }
+    </div>
+
+
+    <button type="submit" class="btn btn-primary">@ButtonText</button>
+    <button type="button" class="btn btn-secondary ms-2" @onclick="OnCancelClick">Hủy</button>
+</EditForm>
+
+@code {
+    private void ToggleCategory(string? category)
+    {
+        if (string.IsNullOrWhiteSpace(category))
+            return;
+
+        if (Model.CategoryNames.Contains(category))
+        {
+            Model.CategoryNames.Remove(category);
+        }
+        else
+        {
+            Model.CategoryNames.Add(category);
+        }
+    }
+
+    private bool IsChecked(string category)
+    {
+        return Model.CategoryNames.Contains(category);
+    }
+
+    private void OnCategoryChanged(bool isChecked, string category)
+    {
+        if (isChecked)
+        {
+            if (!Model.CategoryNames.Contains(category))
+            {
+                Model.CategoryNames.Add(category);
+            }
+        }
+        else
+        {
+            Model.CategoryNames.Remove(category);
+        }
+    }
+}

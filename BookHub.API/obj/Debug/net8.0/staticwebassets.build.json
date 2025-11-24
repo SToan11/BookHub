@@ -1,0 +1,12 @@
+{
+  "Version": 1,
+  "Hash": "hXcexwoErG+qPsmg+xX0uRGpTjcq2VJL+uEOPgSpAV0=",
+  "Source": "BookHub.API",
+  "BasePath": "_content/BookHub.API",
+  "Mode": "Default",
+  "ManifestType": "Build",
+  "ReferencedProjectsConfiguration": [],
+  "DiscoveryPatterns": [],
+  "Assets": [],
+  "Endpoints": []
+}

@@ -1,0 +1,271 @@
+﻿@page "/admin/products"
+@using BookHub.Client.Models
+@inject ProductService ProductService
+@inject IJSRuntime JS
+@layout AdminLayout
+
+<h3 class="mb-3">📦 Danh sách sản phẩm</h3>
+
+<div class="mb-3">
+    <input class="form-control" @bind="searchKeyword" placeholder="🔍 Nhập từ khóa tìm kiếm..." />
+</div>
+<div class="mb-3">
+    <button class="btn btn-primary me-2" @onclick="Search">Tìm kiếm</button>
+    <button class="btn btn-secondary" @onclick="LoadData">Tải lại</button>
+</div>
+
+@if (products == null)
+{
+    <p><em>Đang tải dữ liệu...</em></p>
+}
+else if (!products.Any())
+{
+    <p><em>Không có sản phẩm nào.</em></p>
+}
+else
+{
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Tên</th>
+                <th>Tác giả</th>
+                <th>Mô tả</th>
+                <th>Giá</th>
+                <th>Tồn kho</th>
+                <th>Thể loại</th>
+                <th>Hành động</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var product in products)
+            {
+                <tr>
+                    <td>@product.Name</td>
+                    <td>@product.Author</td>
+                    <td>@product.Description</td>
+                    <td>@product.Price.ToString("N0")</td>
+                    <td>@product.QuantityInStock</td>
+                    <td>@string.Join(", ", product.Categories)</td>
+                    <td>
+                        <button class="btn btn-sm btn-warning me-2" @onclick="() => StartEditing(product.Id)">Sửa</button>
+                        <button class="btn btn-sm btn-danger" @onclick="() => Delete(product.Id)">Xóa</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+<button class="btn btn-success mt-3" @onclick="StartAdding">➕ Thêm sản phẩm</button>
+
+@if (!string.IsNullOrEmpty(errorMessage))
+{
+    <div class="alert alert-danger mt-2">@errorMessage</div>
+}
+
+
+@if (isAdding || isEditing)
+{
+    <ProductForm Model="productForm"
+                 ButtonText="@((isEditing ? "Cập nhật" : "Thêm"))"
+                 OnSubmit="OnSubmitForm"
+                 OnCancelClick="CancelForm"
+                 AllCategories="@allCategories" />
+}
+
+@code {
+    private List<ProductDto>? products;
+    private List<string> allCategories = new();
+    private string searchKeyword = "";
+
+    private bool isAdding = false;
+    private bool isEditing = false;
+    private ProductCreateDto productForm = new();
+    private Guid editingId = Guid.Empty;
+    private string? errorMessage = null;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+        allCategories = await ProductService.GetAllCategoriesAsync();
+    }
+
+    private async Task LoadData()
+    {
+        products = await ProductService.GetAllAsync();
+    }
+
+    private async Task Search()
+    {
+        products = string.IsNullOrWhiteSpace(searchKeyword)
+            ? await ProductService.GetAllAsync()
+            : await ProductService.SearchAsync(searchKeyword);
+    }
+
+    private async Task Delete(Guid id)
+    {
+        var confirmed = await JS.InvokeAsync<bool>("confirm", "Bạn có chắc muốn xóa sản phẩm này?");
+        if (confirmed)
+        {
+            await ProductService.DeleteAsync(id);
+            await LoadData();
+        }
+    }
+
+    private void StartAdding()
+    {
+        productForm = new();
+        isAdding = true;
+        isEditing = false;
+    }
+
+    private async Task StartEditing(Guid id)
+    {
+        var product = await ProductService.GetByIdAsync(id);
+        if (product != null)
+        {
+            productForm = new ProductCreateDto
+                {
+                    Name = product.Name,
+                    Author = product.Author,
+                    Description = product.Description,
+                    Price = product.Price,
+                    QuantityInStock = product.QuantityInStock,
+                    Image = product.Image,
+                    CategoryNames = new List<string>(product.Categories)
+                };
+            editingId = id;
+            isEditing = true;
+            isAdding = false;
+        }
+    }
+
+    // private async Task OnSubmitForm()
+    // {
+    //     errorMessage = null;
+
+    //     if (string.IsNullOrWhiteSpace(productForm.Name))
+    //     {
+    //         errorMessage = "Tên sản phẩm không được để trống.";
+    //         return;
+    //     }
+
+    //     try
+    //     {
+    //         if (isAdding)
+    //         {
+    //             await ProductService.CreateAsync(productForm);
+    //         }
+    //         else if (isEditing)
+    //         {
+    //             var updateDto = new ProductUpdateDto
+    //                 {
+    //                     Name = productForm.Name,
+    //                     Description = productForm.Description,
+    //                     Price = productForm.Price,
+    //                     QuantityInStock = productForm.QuantityInStock,
+    //                     Image = productForm.Image,
+    //                     CategoryNames = productForm.CategoryNames
+    //                 };
+    //             await ProductService.UpdateAsync(editingId, updateDto);
+    //         }
+
+    //         isAdding = false;
+    //         isEditing = false;
+    //         productForm = new();
+    //         await LoadData();
+    //     }
+    //     catch (Exception ex)
+    //     {
+    //         errorMessage = ex.Message;
+    //     }
+    // }
+    private async Task OnSubmitForm()
+    {
+        errorMessage = null;
+
+        // Kiểm tra tên sản phẩm không được để trống
+        if (string.IsNullOrWhiteSpace(productForm.Name))
+        {
+            errorMessage = "❌ Tên sản phẩm không được để trống.";
+            return;
+        }
+
+        // Kiểm tra giá phải lớn hơn 0
+        if (productForm.Price <= 0)
+        {
+            errorMessage = "❌ Giá sản phẩm phải lớn hơn 0.";
+            return;
+        }
+
+        // Kiểm tra số lượng tồn kho phải lớn hơn hoặc bằng 0
+        if (productForm.QuantityInStock < 0)
+        {
+            errorMessage = "❌ Số lượng tồn kho không được âm.";
+            return;
+        }
+
+        // Kiểm tra có chọn ít nhất 1 thể loại
+        if (productForm.CategoryNames == null || !productForm.CategoryNames.Any())
+        {
+            errorMessage = "❌ Vui lòng chọn ít nhất một thể loại.";
+            return;
+        }
+        if (string.IsNullOrWhiteSpace(productForm.Author))
+        {
+            errorMessage = "❌ Vui lòng nhập tên tác giả.";
+            return;
+        }
+
+        // Kiểm tra trùng tên sản phẩm khi thêm (hoặc sửa mà tên bị đổi)
+        var allProducts = await ProductService.GetAllAsync();
+        var nameConflict = allProducts.Any(p =>
+            p.Name.Equals(productForm.Name, StringComparison.OrdinalIgnoreCase)
+            && (!isEditing || p.Id != editingId)); // Tránh lỗi khi sửa chính nó
+
+        if (nameConflict)
+        {
+            errorMessage = "❌ Tên sản phẩm đã tồn tại.";
+            return;
+        }
+
+        try
+        {
+            if (isAdding)
+            {
+                await ProductService.CreateAsync(productForm);
+            }
+            else if (isEditing)
+            {
+                var updateDto = new ProductUpdateDto
+                    {
+                        Name = productForm.Name,
+                        Author = productForm.Author,
+                        Description = productForm.Description,
+                        Price = productForm.Price,
+                        QuantityInStock = productForm.QuantityInStock,
+                        Image = productForm.Image,
+                        CategoryNames = productForm.CategoryNames
+                    };
+                await ProductService.UpdateAsync(editingId, updateDto);
+            }
+
+            isAdding = false;
+            isEditing = false;
+            productForm = new();
+            await LoadData();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"❌ Có lỗi xảy ra: {ex.Message}";
+        }
+    }
+
+
+    private void CancelForm()
+    {
+        isAdding = false;
+        isEditing = false;
+        productForm = new();
+    }
+}

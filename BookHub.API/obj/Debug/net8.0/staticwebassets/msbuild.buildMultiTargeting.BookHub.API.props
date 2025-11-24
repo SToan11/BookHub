@@ -1,0 +1,3 @@
+﻿<Project>
+  <Import Project="..\build\BookHub.API.props" />
+</Project>
