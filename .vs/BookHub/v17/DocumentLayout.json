@@ -1,0 +1,41 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "D:\\C#-6\\ASM2\\BookHub\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{69FEE431-0D5D-4E0F-A9D9-7796CBA0C069}|BookHub\\BookHub.csproj|d:\\c#-6\\asm2\\bookhub\\bookhub\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{69FEE431-0D5D-4E0F-A9D9-7796CBA0C069}|BookHub\\BookHub.csproj|solutionrelative:bookhub\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 1,
+          "Children": [
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{e1b7d1f8-9b3c-49b1-8f4f-bfc63a88835d}"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "Program.cs",
+              "DocumentMoniker": "D:\\C#-6\\ASM2\\BookHub\\BookHub\\Program.cs",
+              "RelativeDocumentMoniker": "BookHub\\Program.cs",
+              "ToolTip": "D:\\C#-6\\ASM2\\BookHub\\BookHub\\Program.cs*",
+              "RelativeToolTip": "BookHub\\Program.cs*",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAA4AAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-04-08T04:47:28.163Z",
+              "EditorCaption": ""
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
